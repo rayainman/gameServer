@@ -1,0 +1,41 @@
+syntax = "proto3";// 指定proto版本
+
+option go_package = "./pb/room_manager;room_manager_pb"; // 生成的go文件的包名 
+
+package RoomManager;
+
+service RoomManager {
+  rpc CreateRoom (CreateRoomRequest) returns (CreateRoomResponse) {}
+  rpc EnterRoom (EnterRoomRequest) returns (stream BroadcastResponse) {}
+  rpc Broadcast (BroadcastMessage) returns (BroadcastResponse) {}
+}
+
+// The request message containing the user's name.
+message CreateRoomRequest {
+    string id = 1;
+}
+  
+// The response message containing the greetings
+message CreateRoomResponse {
+    bool ok = 1;
+    string id = 2;
+}
+  
+message Audience {
+    string userID = 1;
+    string userName = 2;
+}
+
+message EnterRoomRequest {
+    string roomID = 1;
+    repeated Audience audiences = 2;
+}
+  
+message BroadcastMessage {
+    int32 game_id = 1;
+    string player_name = 2;
+}
+
+message BroadcastResponse {
+    string message = 1;
+}
