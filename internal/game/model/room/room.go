@@ -9,7 +9,7 @@ import (
 
 type Room struct {
 	ID        string
-	Audiences map[string]*player.Audience // 玩家列表
+	Audiences map[string]*player.ClientInterface // 玩家列表
 	Game      *game.Game
 	mu        sync.Mutex
 }
@@ -41,7 +41,7 @@ func CreateRoom() (string, bool) {
 
 	room := &Room{
 		ID:        id,
-		Audiences: make(map[string]*player.Audience),
+		Audiences: make(map[string]*player.ClientInterface),
 		Game:      game.NewGame(),
 	}
 
@@ -65,17 +65,18 @@ func (r *Room) DeleteRoom() {
 	delete(rooms, r.ID)
 }
 
-func (r *Room) AddAudience(p *player.Audience) bool {
+func (r *Room) AddAudience(p player.ClientInterface) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	id := p.GetID()
 	// r.Players = append(r.Players, p...)
 	// check if player already exists
-	if _, ok := r.Audiences[p.ID]; ok {
+	if _, ok := r.Audiences[id]; ok {
 		return false
 	}
 
-	r.Audiences[p.ID] = p
+	r.Audiences[id] = &p
 
 	return true
 }
@@ -84,10 +85,10 @@ func (r *Room) RemoveAudience(p *player.Audience) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	delete(r.Audiences, p.ID)
+	delete(r.Audiences, (*p).GetID())
 }
 
-func (r *Room) GetAudiences() map[string]*player.Audience {
+func (r *Room) GetAudiences() map[string]*player.ClientInterface {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -102,16 +103,23 @@ func (r *Room) GetAudiencesCount() int {
 }
 
 // audiences join seat
-func (r *Room) JoinSeat(audiences map[string]*player.Audience) {
+func (r *Room) JoinSeat(clients map[string]*player.ClientInterface) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	// 確定在房間裡的audience 才能被安排座位
-	for _, audience := range audiences {
-		if _, ok := r.Audiences[audience.ID]; ok {
-			r.Game.Table.JoinSeat(audience)
+	for _, client := range clients {
+		id := (*client).GetID()
+		name := (*client).GetUsername()
+		stream := (*client).GetConnection()
+		audience := player.NewAudience(id, name, stream)
+
+		player := player.NewPlayer(audience)
+		if _, ok := r.Audiences[id]; ok {
+			r.Game.Table.JoinSeat(player)
 		}
 	}
+
 }
 
 // func (r *Room) StartGame() {

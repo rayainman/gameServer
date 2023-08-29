@@ -19,11 +19,6 @@ func CreateHandler(s *grpc.Server) {
 	pb.RegisterRoomManagerServer(s, &server{})
 }
 
-// func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-// 	log.Printf("Received: %v", in.GetName())
-// 	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
-// }
-
 func (s *server) CreateRoom(ctx context.Context, in *pb.CreateRoomRequest) (*pb.CreateRoomResponse, error) {
 	roomId := in.GetId()
 	if id, ok := room.CreateRoom(); !ok {

@@ -1,6 +1,7 @@
 package table
 
 import (
+	"fmt"
 	"gameserver/internal/game/model/card"
 	"gameserver/internal/game/model/player"
 	"math/rand"
@@ -50,16 +51,12 @@ func (d *Table) OriginCards() []card.Card {
 }
 
 func (d *Table) Shuffle() {
+
+	fmt.Println("Shuffle")
+
 	d.rng.Shuffle(len(d.Cards), func(i, j int) {
 		d.Cards[i], d.Cards[j] = d.Cards[j], d.Cards[i]
 	})
-}
-
-// 发牌
-func (d *Table) Deal(num int) []card.Card {
-	cards := d.Cards[:num]
-	d.Cards = d.Cards[num:]
-	return cards
 }
 
 func (t *Table) initSeats() {
@@ -69,22 +66,20 @@ func (t *Table) initSeats() {
 	}
 }
 
-// 隨機安排座位
-func (t *Table) ArrangeSeats(audiences map[string]*player.Audience) {
+// // 隨機安排座位
+// func (t *Table) ArrangeSeats(audiences map[string]*player.Player) {
 
-	for _, audience := range audiences {
-		t.JoinSeat(audience)
-	}
-}
+// 	for _, audience := range audiences {
+// 		t.JoinSeat(audience)
+// 	}
+// }
 
 // JoinSeat 加入座位
-func (t *Table) JoinSeat(audience *player.Audience) {
-
-	player := player.NewPlayer(audience)
+func (t *Table) JoinSeat(p *player.Player) {
 
 	for _, seat := range t.Seats {
 		if seat.Player == nil {
-			seat.Player = player
+			seat.Player = p
 			break
 		}
 	}
@@ -128,10 +123,35 @@ func (t *Table) GetActivePlayers() []*player.Player {
 	return activePlayers
 }
 
-// 所有存活玩家發一張牌
-// func (t *Table) Deal() {
-// 	for _, seat := range t.GetActiveSeats() {
-// 		// seat.Player.Deal()
-// 		fmt.Print(seat.Player.Username)
-// 	}
-// }
+// 所有存活玩家發n張牌 沒牌會重洗
+func (t *Table) Deal(num int) {
+	for _, seat := range t.GetActiveSeats() {
+		seat.Player.SetHand(t.DealCards(num))
+	}
+}
+
+// 发牌
+func (d *Table) DealCards(num int) []card.Card {
+
+	var cards []card.Card
+	for i := 0; i < num; i++ {
+		cards = append(cards, d.dealOneCard())
+	}
+
+	return cards
+}
+
+func (t *Table) dealOneCard() card.Card {
+	// 一次發一張牌
+	// 確保牌組有牌
+	if len(t.Cards) == 0 {
+		t.Cards = t.OriginCards()
+		t.Shuffle()
+	}
+
+	card := t.Cards[0]
+	t.Cards = t.Cards[1:]
+
+	return card
+
+}

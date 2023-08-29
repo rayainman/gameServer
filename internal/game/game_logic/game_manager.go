@@ -10,7 +10,7 @@ import (
 )
 
 const turnDuration = 30 * time.Second
-const maxTurns = 20
+const maxTurns = 100
 
 func StartGame(room *room.Room) string {
 
@@ -113,16 +113,12 @@ func handleOpenStage(room *room.Room) error {
 	if !room.Game.Stage.IsOpen() {
 		return fmt.Errorf("room %s is not in the open stage", room.ID)
 	}
-	game_rules.PickWinners(room.Game.Table)
 
-	activeSeats := len(room.Game.Table.GetActiveSeats())
+	fmt.Printf("Room %s is in the open stage\n", room.ID)
 
-	if activeSeats == 1 {
-		room.Game.Stage.Next()
-	}
-	// 印出存活玩家人數
-	fmt.Printf("Room %s is in the open stage, %d players alive\n", room.ID, activeSeats)
+	room.Game.Table.Shuffle()
 
+	room.Game.Stage.Next()
 	return nil
 }
 
@@ -146,6 +142,7 @@ func handleBetStage(room *room.Room) error {
 
 	fmt.Printf("Room %s is in the bet stage\n", room.ID)
 
+	game_rules.PickWinners(room.Game.Table)
 	room.Game.Stage.Next()
 
 	return nil
@@ -159,8 +156,15 @@ func handleShowdownStage(room *room.Room) error {
 
 	fmt.Printf("Room %s is in the showdown stage\n", room.ID)
 
-	room.Game.Stage.Next()
+	activeSeats := len(room.Game.Table.GetActiveSeats())
 
+	// 印出存活玩家人數
+	fmt.Printf("Room %s is in the showdown stage, %d players alive\n", room.ID, activeSeats)
+	if activeSeats == 1 {
+		room.Game.Stage.Next()
+	} else {
+		room.Game.Stage.Previous()
+	}
 	return nil
 
 }
@@ -171,7 +175,7 @@ func handleEndStage(room *room.Room) error {
 		return fmt.Errorf("room %s is not in the end stage", room.ID)
 	}
 
-	fmt.Printf("Room %s is in the end stage\n %s is winner \n", room.ID, game_rules.PickWinner(room.Game.Table).Username)
+	fmt.Printf("Room %s is in the end stage\n %s is winner \n", room.ID, game_rules.GetWinner(room.Game.Table).Username)
 
 	room.Game.Stage.Next()
 

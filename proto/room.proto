@@ -24,6 +24,8 @@ message CreateRoomResponse {
 message Audience {
     string userID = 1;
     string userName = 2;
+    string brand = 3;
+    string site = 4;
 }
 
 message EnterRoomRequest {
